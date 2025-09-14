@@ -14,13 +14,18 @@ export const authOptions = {
   ],
   callbacks: {
     async signIn({ user }) {
-      await dbConnect();
-      // Save user if not exists
-      const existingUser = await User.findOne({ email: user.email });
-      if (!existingUser) {
-        await User.create(user);
-      }
-      return true;
+        await dbConnect();
+        // Save user if not exists
+        const existingUser = await User.findOne({ email: user.email });
+        if (!existingUser) {
+            await User.create({
+                name: user.name,
+                email: user.email,
+                image: user.image,
+                googleId: user.id, // Save Google ID in a separate field
+            });
+        }
+        return true;
     },
     async session({ session }) {
       await dbConnect();
