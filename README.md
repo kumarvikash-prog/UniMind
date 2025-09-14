@@ -102,7 +102,7 @@ Open 👉 [http://localhost:3000](http://localhost:3000)
 
 ```
 UniMind/
-├── .github/               # PR templates, contributing guide
+├── .github/                   # PR templates, contributing guide
 │   └── PULL_REQUEST_TEMPLATE.md
 ├── .gitignore
 ├── CONTRIBUTING.md
@@ -111,25 +111,42 @@ UniMind/
 ├── next.config.mjs
 ├── package.json
 ├── postcss.config.js
-├── README-NEXT.md
-├── README.md
 ├── tailwind.config.js
-├── pages/                 # Next.js pages & API routes
+├── .env.example
+├── README.md
+│
+├── lib/
+│   └── mongodb.js             # MongoDB connection helper
+│
+├── models/
+│   └── User.js                # User schema
+│
+├── pages/
 │   ├── _app.js
 │   ├── _document.js
-│   ├── index.js
+│   ├── index.js               # Landing page (Google Auth)
 │   └── api/
-│       └── hello.js
-├── public/                # Static assets
+│       ├── auth/
+│       │   └── [...nextauth].js   # NextAuth config
+│       ├── hello.js
+│       └── test.js                # DB test route
+│
+├── components/
+│   └── Navbar.js              # UI components (Navbar, etc.)
+│
+├── public/                    # Static assets
 │   ├── favicon.ico
 │   ├── file.svg
 │   ├── globe.svg
+│   ├── logo.png
 │   ├── next.svg
 │   ├── vercel.svg
 │   └── window.svg
-├── styles/                # Global styles (Tailwind)
-│   └── globals.css
-└── .next/                 # Next.js build output (auto-generated)
+│
+├── styles/
+│   └── globals.css            # Global styles (Tailwind)
+│
+└── .next/                     # Next.js build output (auto-generated)
 ```
 
 ---
