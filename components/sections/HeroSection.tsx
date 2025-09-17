@@ -4,11 +4,11 @@ import { ArrowRight, Zap } from "lucide-react";
 import { Navigation } from "../Navigation";
 import { FeatureHighlights } from "../FeatureHighlights";
 import { AnimatedBackground } from "../AnimatedBackground";
+import { signIn } from "next-auth/react";
 
 export const HeroSection = () => {
   const handleGetStarted = () => {
-    // Google OAuth integration will be added here
-    console.log("Starting Google OAuth flow...");
+    signIn("google");
   };
 
   return (
@@ -57,7 +57,7 @@ export const HeroSection = () => {
         >
           <HolographicButton variant="hero" onClick={handleGetStarted}>
             <Zap className="w-5 h-5" />
-            Enter the UniMind Universe
+            Continue with Google
             <ArrowRight className="w-5 h-5" />
           </HolographicButton>
         </motion.div>

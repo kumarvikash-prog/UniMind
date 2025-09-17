@@ -10,12 +10,11 @@ import {
   Heart
 } from "lucide-react";
 
+import { signIn } from "next-auth/react";
+
 export const CTASection = () => {
   const handleGoogleAuth = () => {
-    // Google OAuth integration will be implemented here
-    console.log("Initiating Google OAuth...");
-    // This would typically redirect to Google OAuth or open a popup
-    // window.location.href = '/auth/google';
+    signIn("google");
   };
 
   const benefits = [
