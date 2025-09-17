@@ -2,10 +2,11 @@ import { motion } from "framer-motion";
 import { Brain } from "lucide-react";
 import { HolographicButton } from "./HolographicButton";
 
+import { signIn } from "next-auth/react";
+
 export const Navigation = () => {
   const handleGoogleAuth = () => {
-    console.log("Initiating Google OAuth...");
-    // Google OAuth integration will be implemented here
+    signIn("google");
   };
 
   return (
