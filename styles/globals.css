@@ -1,29 +1,394 @@
-/* @import "tailwindcss"; */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+/* UniMind Design System - Revolutionary Neo-Brutalism meets Glassmorphism */
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    /* Core Brand Colors - HSL */
+    --background: 220 25% 5%;
+    --foreground: 240 20% 95%;
+    
+    /* Glass System */
+    --glass-primary: 240 100% 70%;
+    --glass-secondary: 280 100% 75%;
+    --glass-accent: 200 100% 65%;
+    --glass-background: 220 25% 8%;
+    
+    /* Holographic System */
+    --holo-pink: 320 100% 75%;
+    --holo-blue: 220 100% 70%;
+    --holo-purple: 270 100% 75%;
+    --holo-cyan: 180 100% 70%;
+    --holo-yellow: 60 100% 70%;
+    
+    /* Neo-Brutalist System */
+    --brutal-black: 220 25% 5%;
+    --brutal-white: 0 0% 98%;
+    --brutal-shadow: 240 30% 15%;
+    
+    /* Interactive States */
+    --primary: 240 100% 70%;
+    --primary-foreground: 220 25% 5%;
+    --secondary: 280 100% 75%;
+    --secondary-foreground: 220 25% 5%;
+    
+    --card: 220 25% 8%;
+    --card-foreground: 240 20% 95%;
+    
+    --popover: 220 25% 8%;
+    --popover-foreground: 240 20% 95%;
+    
+    --muted: 220 25% 15%;
+    --muted-foreground: 240 10% 60%;
+    
+    --accent: 200 100% 65%;
+    --accent-foreground: 220 25% 5%;
+    
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    
+    --border: 220 25% 15%;
+    --input: 220 25% 15%;
+    --ring: 240 100% 70%;
+    
+    --radius: 1rem;
+    
+    /* Magic Gradients */
+    --gradient-cosmic: linear-gradient(135deg, hsl(var(--holo-pink)) 0%, hsl(var(--holo-blue)) 25%, hsl(var(--holo-purple)) 50%, hsl(var(--holo-cyan)) 75%, hsl(var(--holo-yellow)) 100%);
+    --gradient-aurora: linear-gradient(90deg, hsl(var(--glass-primary)) 0%, hsl(var(--glass-secondary)) 50%, hsl(var(--glass-accent)) 100%);
+    --gradient-depth: linear-gradient(180deg, hsl(var(--glass-background)) 0%, hsl(var(--brutal-black)) 100%);
+    
+    /* Glassmorphism Properties */
+    --glass-blur: 20px;
+    --glass-opacity: 0.1;
+    --glass-border: 1px solid hsl(var(--glass-primary) / 0.2);
+    
+    /* Animation Variables */
+    --animation-speed: 0.3s;
+    --bounce-speed: 0.6s;
+    --morph-speed: 1.2s;
+  }
+
+  /* * { 
+    @apply border-border;
+  } */
+
+  /* commenting this out because border-border is a Tailwind class that only works if you have a border color named border in your Tailwind config. */
+  
+  body {
+    @apply bg-background text-foreground font-inter overflow-x-hidden;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  html {
+    scroll-behavior: smooth;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer components {
+  /* Glassmorphism Components */
+  .glass {
+    background: hsl(var(--glass-background) / var(--glass-opacity));
+    backdrop-filter: blur(var(--glass-blur));
+    border: var(--glass-border);
+    box-shadow: 0 8px 32px hsl(var(--glass-primary) / 0.1);
+  }
+
+  .glass-card {
+    @apply glass rounded-2xl p-6 transition-all duration-300 cursor-pointer;
+  }
+
+  .glass-card:hover {
+    transform: scale(1.05) translateY(-8px);
+    box-shadow: 0 20px 40px hsl(var(--glass-primary) / 0.3);
+    border-color: hsl(var(--glass-primary) / 0.5);
+  }
+
+  .glass-button {
+    @apply glass rounded-xl px-6 py-3 font-medium transition-all duration-300;
+    background: hsl(var(--glass-primary) / 0.1);
+    border: 1px solid hsl(var(--glass-primary) / 0.3);
+  }
+
+  .glass-button:hover {
+    background: hsl(var(--glass-primary) / 0.2);
+    border-color: hsl(var(--glass-primary) / 0.5);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px hsl(var(--glass-primary) / 0.3);
+  }
+
+  /* Holographic Effects */
+  .holo-text {
+    background: var(--gradient-cosmic);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: holo-shift 3s ease-in-out infinite;
+  }
+
+  .holo-border {
+    border: 2px solid transparent;
+    background: var(--gradient-cosmic);
+    background-clip: border-box;
+    position: relative;
+  }
+
+  .holo-border::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--gradient-cosmic);
+    border-radius: inherit;
+    padding: 2px;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: xor;
+    -webkit-mask-composite: xor;
+  }
+
+  /* Neo-Brutalist Shadows */
+  .brutal-shadow {
+    box-shadow: 8px 8px 0 hsl(var(--brutal-shadow));
+  }
+
+  .brutal-shadow-lg {
+    box-shadow: 12px 12px 0 hsl(var(--brutal-shadow));
+  }
+
+  .brutal-button {
+    @apply font-bold px-8 py-4 border-2 border-foreground bg-primary text-primary-foreground transition-all duration-200;
+  }
+
+  .brutal-button:hover {
+    transform: translate(-4px, -4px);
+    box-shadow: 8px 8px 0 hsl(var(--brutal-shadow));
+  }
+
+  /* Floating Animations */
+  .float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .float-delayed {
+    animation: float 6s ease-in-out infinite;
+    animation-delay: -2s;
+  }
+
+  .float-delayed-2 {
+    animation: float 6s ease-in-out infinite;
+    animation-delay: -4s;
+  }
+
+  /* Particle Trail */
+  .cursor-trail {
+    pointer-events: none;
+    position: fixed;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--gradient-cosmic);
+    opacity: 0.8;
+    z-index: 9999;
+    animation: trail-fade 1s ease-out forwards;
+  }
+
+  /* Morphing Shapes */
+  .morph-blob {
+    border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+    animation: morph 8s ease-in-out infinite;
+  }
+  
+  /* Removed cursor trail and morph-blob classes */
+
+  /* 3D Transform Effects */
+  .card-3d {
+    transform-style: preserve-3d;
+    perspective: 1000px;
+  }
+
+  .card-3d:hover {
+    transform: rotateY(15deg) rotateX(15deg);
+  }
+
+  /* Levitation Effect */
+  .levitate {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .levitate:hover {
+    transform: translateY(-20px);
+    box-shadow: 0 30px 60px hsl(var(--primary) / 0.3);
+  }
+
+  /* Energy Pulse */
+  .energy-pulse {
+    animation: energy-pulse 2s ease-in-out infinite;
+  }
+
+  /* Feature Card Hover Effects */
+  .feature-card-blue:hover {
+    box-shadow: 0 20px 40px rgba(59, 130, 246, 0.3);
+    border: 1px solid rgba(59, 130, 246, 0.5);
+  }
+
+  .feature-card-purple:hover {
+    box-shadow: 0 20px 40px rgba(147, 51, 234, 0.3);
+    border: 1px solid rgba(147, 51, 234, 0.5);
+  }
+
+  .feature-card-green:hover {
+    box-shadow: 0 20px 40px rgba(34, 197, 94, 0.3);
+    border: 1px solid rgba(34, 197, 94, 0.5);
+  }
+
+  .feature-card-orange:hover {
+    box-shadow: 0 20px 40px rgba(249, 115, 22, 0.3);
+    border: 1px solid rgba(249, 115, 22, 0.5);
+  }
+
+  .feature-card-indigo:hover {
+    box-shadow: 0 20px 40px rgba(99, 102, 241, 0.3);
+    border: 1px solid rgba(99, 102, 241, 0.5);
+  }
+
+  .feature-card-yellow:hover {
+    box-shadow: 0 20px 40px rgba(245, 158, 11, 0.3);
+    border: 1px solid rgba(245, 158, 11, 0.5);
+  }
+
+  /* Cosmic Background */
+  .cosmic-bg {
+    background: var(--gradient-depth);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cosmic-bg::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: 
+      radial-gradient(circle at 20% 50%, hsl(var(--holo-pink) / 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, hsl(var(--holo-blue) / 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 40% 80%, hsl(var(--holo-cyan) / 0.1) 0%, transparent 50%);
+    animation: cosmic-shift 10s ease-in-out infinite;
+  }
+  @media (max-width: 768px) {
+    .glass-card:hover {
+      transform: scale(1.02) translateY(-4px);
+    }
+    
+    .text-cosmic {
+      @apply text-4xl md:text-6xl;
+    }
+    
+    .text-stellar {
+      @apply text-2xl md:text-4xl;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .glass-card:hover {
+      transform: none;
+      transition: box-shadow 0.3s ease;
+    }
+    
+    * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer utilities {
+  /* Typography Scales */
+  .text-cosmic {
+    @apply text-6xl md:text-8xl font-black leading-none tracking-tight;
+  }
+
+  .text-stellar {
+    @apply text-4xl md:text-6xl font-bold leading-tight;
+  }
+
+  .text-orbital {
+    @apply text-2xl md:text-4xl font-semibold;
+  }
+
+  /* Gradient Text */
+  .gradient-text {
+    background: var(--gradient-cosmic);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* Interactive Elements */
+  .magnetic {
+    transition: transform 0.2s ease;
+  }
+
+  .magnetic:hover {
+    transform: scale(1.05);
+  }
+
+  /* Spacing System */
+  .space-cosmic {
+    @apply space-y-24 md:space-y-32;
+  }
+
+  .space-stellar {
+    @apply space-y-16 md:space-y-24;
+  }
+
+  .space-orbital {
+    @apply space-y-8 md:space-y-12;
+  }
+}
+
+/* Keyframe Animations */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
+}
+
+@keyframes holo-shift {
+  0%, 100% { filter: hue-rotate(0deg); }
+  25% { filter: hue-rotate(90deg); }
+  50% { filter: hue-rotate(180deg); }
+  75% { filter: hue-rotate(270deg); }
+}
+
+@keyframes morph {
+  0%, 100% { border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%; }
+  25% { border-radius: 58% 42% 75% 25% / 76% 46% 54% 24%; }
+  50% { border-radius: 50% 50% 33% 67% / 55% 27% 73% 45%; }
+  75% { border-radius: 33% 67% 58% 42% / 63% 68% 32% 37%; }
+}
+
+@keyframes trail-fade {
+  to {
+    opacity: 0;
+    transform: scale(0);
+  }
+}
+
+@keyframes energy-pulse {
+  0%, 100% { 
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.5);
+    transform: scale(1);
+  }
+  50% { 
+    box-shadow: 0 0 40px hsl(var(--primary) / 0.8);
+    transform: scale(1.05);
+  }
+}
+
+@keyframes cosmic-shift {
+  0%, 100% { transform: translateX(0) translateY(0); }
+  25% { transform: translateX(5%) translateY(-5%); }
+  50% { transform: translateX(-3%) translateY(3%); }
+  75% { transform: translateX(-5%) translateY(-3%); }
 }
