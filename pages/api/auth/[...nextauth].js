@@ -14,24 +14,34 @@ export const authOptions = {
   ],
   callbacks: {
     async signIn({ user }) {
-        await dbConnect();
-        // Save user if not exists
-        const existingUser = await User.findOne({ email: user.email });
-        if (!existingUser) {
+        try {
+          await dbConnect();
+          // Save user if not exists
+          const existingUser = await User.findOne({ email: user.email });
+          if (!existingUser) {
             await User.create({
-                name: user.name,
-                email: user.email,
-                image: user.image,
-                googleId: user.id, // Save Google ID in a separate field
+              name: user.name,
+              email: user.email,
+              image: user.image,
+              googleId: user.id, // Save Google ID in a separate field
             });
+          }
+          return true;
+        } catch (error) {
+          console.error("Error in signIn callback:", error);
+          return false;
         }
-        return true;
     },
     async session({ session }) {
-      await dbConnect();
-      const dbUser = await User.findOne({ email: session.user.email });
-      session.user.id = dbUser?._id?.toString();
-      return session;
+      try {
+        await dbConnect();
+        const dbUser = await User.findOne({ email: session.user.email });
+        session.user.id = dbUser?._id?.toString();
+        return session;
+      } catch (error) {
+        console.error("Error in session callback:", error);
+        return session;
+      }
     },
   },
   secret: process.env.NEXTAUTH_SECRET,
