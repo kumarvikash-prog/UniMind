@@ -33,6 +33,22 @@ export const authOptions = {
       session.user.id = dbUser?._id?.toString();
       return session;
     },
+    async redirect({ url, baseUrl }) {
+      // After successful login, redirect to /workspace
+      if (url === baseUrl || url === `${baseUrl}/`) {
+        return `${baseUrl}/workspace`;
+      }
+      // If it's a relative URL, make it absolute
+      if (url.startsWith("/")) {
+        return `${baseUrl}${url}`;
+      }
+      // If it's the same origin, allow it
+      if (url.startsWith(baseUrl)) {
+        return url;
+      }
+      // Otherwise, redirect to workspace
+      return `${baseUrl}/workspace`;
+    },
   },
   secret: process.env.NEXTAUTH_SECRET,
 };

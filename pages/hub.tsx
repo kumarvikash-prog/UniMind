@@ -1,0 +1,482 @@
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/router";
+import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
+import { 
+  Upload, 
+  Search, 
+  Filter, 
+  Grid, 
+  List, 
+  MoreVertical,
+  Download,
+  Eye,
+  Trash2,
+  Share2,
+  Folder,
+  FileText,
+  Image,
+  Video,
+  Music,
+  Archive,
+  Calendar,
+  User
+} from "lucide-react";
+import { AuthenticatedNavbar } from "../components/AuthenticatedNavbar";
+import { HolographicButton } from "../components/HolographicButton";
+
+const Hub = () => {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<string>('date');
+
+  useEffect(() => {
+    if (status === "loading") return;
+    if (!session) {
+      router.push("/");
+    }
+  }, [session, status, router]);
+
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-white"></div>
+      </div>
+    );
+  }
+
+  if (!session) {
+    return null;
+  }
+
+  // Mock data for files
+  const files = [
+    {
+      id: 1,
+      name: 'Project Requirements.pdf',
+      type: 'pdf',
+      size: '2.4 MB',
+      uploadedBy: 'Alice Johnson',
+      uploadedAt: '2024-01-15T10:30:00Z',
+      category: 'documents',
+      description: 'Comprehensive project requirements document',
+      downloadCount: 12,
+      tags: ['requirements', 'project', 'planning']
+    },
+    {
+      id: 2,
+      name: 'Design Mockups v2.0.fig',
+      type: 'fig',
+      size: '5.1 MB',
+      uploadedBy: 'Charlie Brown',
+      uploadedAt: '2024-01-14T16:45:00Z',
+      category: 'design',
+      description: 'Updated design mockups with new features',
+      downloadCount: 8,
+      tags: ['design', 'ui', 'mockups']
+    },
+    {
+      id: 3,
+      name: 'Team Photo.jpg',
+      type: 'jpg',
+      size: '1.2 MB',
+      uploadedBy: 'Bob Smith',
+      uploadedAt: '2024-01-13T14:20:00Z',
+      category: 'images',
+      description: 'Team photo from last meeting',
+      downloadCount: 15,
+      tags: ['team', 'photo', 'meeting']
+    },
+    {
+      id: 4,
+      name: 'Database Schema.sql',
+      type: 'sql',
+      size: '856 KB',
+      uploadedBy: 'Diana Prince',
+      uploadedAt: '2024-01-12T09:15:00Z',
+      category: 'code',
+      description: 'Database schema and migration scripts',
+      downloadCount: 6,
+      tags: ['database', 'schema', 'sql']
+    },
+    {
+      id: 5,
+      name: 'Presentation.pptx',
+      type: 'pptx',
+      size: '8.3 MB',
+      uploadedBy: 'Alice Johnson',
+      uploadedAt: '2024-01-11T11:30:00Z',
+      category: 'documents',
+      description: 'Quarterly project presentation',
+      downloadCount: 20,
+      tags: ['presentation', 'quarterly', 'project']
+    },
+    {
+      id: 6,
+      name: 'Video Tutorial.mp4',
+      type: 'mp4',
+      size: '45.2 MB',
+      uploadedBy: 'Charlie Brown',
+      uploadedAt: '2024-01-10T15:45:00Z',
+      category: 'videos',
+      description: 'Tutorial video for new features',
+      downloadCount: 25,
+      tags: ['tutorial', 'video', 'features']
+    }
+  ];
+
+  const categories = [
+    { id: 'all', name: 'All Files', icon: Folder },
+    { id: 'documents', name: 'Documents', icon: FileText },
+    { id: 'images', name: 'Images', icon: Image },
+    { id: 'videos', name: 'Videos', icon: Video },
+    { id: 'design', name: 'Design', icon: Grid },
+    { id: 'code', name: 'Code', icon: Archive }
+  ];
+
+  const getFileIcon = (type: string) => {
+    switch (type) {
+      case 'pdf': return FileText;
+      case 'fig': return Grid;
+      case 'jpg':
+      case 'png':
+      case 'gif': return Image;
+      case 'mp4':
+      case 'avi':
+      case 'mov': return Video;
+      case 'sql':
+      case 'js':
+      case 'ts':
+      case 'py': return Archive;
+      case 'pptx':
+      case 'docx': return FileText;
+      default: return FileText;
+    }
+  };
+
+  const getFileTypeColor = (type: string) => {
+    switch (type) {
+      case 'pdf':
+      case 'docx':
+      case 'pptx': return 'from-red-500 to-pink-500';
+      case 'fig':
+      case 'psd': return 'from-purple-500 to-indigo-500';
+      case 'jpg':
+      case 'png':
+      case 'gif': return 'from-green-500 to-emerald-500';
+      case 'mp4':
+      case 'avi':
+      case 'mov': return 'from-blue-500 to-cyan-500';
+      case 'sql':
+      case 'js':
+      case 'ts':
+      case 'py': return 'from-yellow-500 to-orange-500';
+      default: return 'from-gray-500 to-slate-500';
+    }
+  };
+
+  const formatFileSize = (size: string) => size;
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString();
+  };
+
+  const filteredFiles = files.filter(file => {
+    const matchesSearch = file.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         file.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         file.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+    const matchesCategory = selectedCategory === 'all' || file.category === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
+
+  const sortedFiles = [...filteredFiles].sort((a, b) => {
+    switch (sortBy) {
+      case 'name':
+        return a.name.localeCompare(b.name);
+      case 'size':
+        return parseFloat(b.size) - parseFloat(a.size);
+      case 'downloads':
+        return b.downloadCount - a.downloadCount;
+      case 'date':
+      default:
+        return new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime();
+    }
+  });
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      <AuthenticatedNavbar currentPage="hub" />
+      
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="mb-8"
+        >
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h1 className="text-3xl font-bold text-white mb-2">Shared Hub</h1>
+              <p className="text-gray-400">Central storage for all team files and resources</p>
+            </div>
+            <HolographicButton onClick={() => router.push('/hub/upload')}>
+              <Upload className="w-4 h-4" />
+              Upload Files
+            </HolographicButton>
+          </div>
+
+          {/* Search and Filters */}
+          <div className="flex flex-col md:flex-row gap-4 mb-6">
+            {/* Search */}
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search files, descriptions, or tags..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            {/* Category Filter */}
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {categories.map((category) => (
+                <option key={category.id} value={category.id} className="bg-slate-800">
+                  {category.name}
+                </option>
+              ))}
+            </select>
+
+            {/* Sort */}
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="date" className="bg-slate-800">Sort by Date</option>
+              <option value="name" className="bg-slate-800">Sort by Name</option>
+              <option value="size" className="bg-slate-800">Sort by Size</option>
+              <option value="downloads" className="bg-slate-800">Sort by Downloads</option>
+            </select>
+
+            {/* View Mode Toggle */}
+            <div className="flex bg-white/10 rounded-lg p-1">
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`p-2 rounded-md transition-colors ${
+                  viewMode === 'grid' 
+                    ? 'bg-white/20 text-white' 
+                    : 'text-gray-400 hover:text-white'
+                }`}
+              >
+                <Grid className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`p-2 rounded-md transition-colors ${
+                  viewMode === 'list' 
+                    ? 'bg-white/20 text-white' 
+                    : 'text-gray-400 hover:text-white'
+                }`}
+              >
+                <List className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Files Display */}
+        {viewMode === 'grid' ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+          >
+            {sortedFiles.map((file, index) => {
+              const FileIcon = getFileIcon(file.type);
+              
+              return (
+                <motion.div
+                  key={file.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: index * 0.1 }}
+                  className="glass-card p-6 hover:bg-white/10 transition-colors cursor-pointer group"
+                  onClick={() => router.push(`/file/${file.id}`)}
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <div className={`w-12 h-12 rounded-lg bg-gradient-to-r ${getFileTypeColor(file.type)} flex items-center justify-center`}>
+                      <FileIcon className="w-6 h-6 text-white" />
+                    </div>
+                    <button className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-white/10">
+                      <MoreVertical className="w-4 h-4 text-gray-400" />
+                    </button>
+                  </div>
+
+                  <h3 className="text-white font-semibold mb-2 truncate" title={file.name}>
+                    {file.name}
+                  </h3>
+                  <p className="text-gray-400 text-sm mb-4 line-clamp-2">
+                    {file.description}
+                  </p>
+
+                  <div className="space-y-2 mb-4">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-400">Size</span>
+                      <span className="text-white">{formatFileSize(file.size)}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-400">Downloads</span>
+                      <span className="text-white">{file.downloadCount}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-400">Uploaded</span>
+                      <span className="text-white">{formatDate(file.uploadedAt)}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-6 h-6 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
+                        <span className="text-white text-xs font-medium">
+                          {file.uploadedBy.charAt(0)}
+                        </span>
+                      </div>
+                      <span className="text-gray-400 text-sm">{file.uploadedBy}</span>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <button className="p-1 rounded hover:bg-white/10">
+                        <Eye className="w-4 h-4 text-gray-400" />
+                      </button>
+                      <button className="p-1 rounded hover:bg-white/10">
+                        <Download className="w-4 h-4 text-gray-400" />
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </motion.div>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="space-y-4"
+          >
+            {sortedFiles.map((file, index) => {
+              const FileIcon = getFileIcon(file.type);
+              
+              return (
+                <motion.div
+                  key={file.id}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.4, delay: index * 0.1 }}
+                  className="glass-card p-6 hover:bg-white/10 transition-colors cursor-pointer group"
+                  onClick={() => router.push(`/file/${file.id}`)}
+                >
+                  <div className="flex items-center space-x-4">
+                    <div className={`w-12 h-12 rounded-lg bg-gradient-to-r ${getFileTypeColor(file.type)} flex items-center justify-center flex-shrink-0`}>
+                      <FileIcon className="w-6 h-6 text-white" />
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-lg font-semibold text-white truncate">
+                          {file.name}
+                        </h3>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-sm text-gray-400">{formatFileSize(file.size)}</span>
+                          <span className="text-sm text-gray-400">•</span>
+                          <span className="text-sm text-gray-400">{file.downloadCount} downloads</span>
+                        </div>
+                      </div>
+
+                      <p className="text-gray-400 mb-3">{file.description}</p>
+
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-4">
+                          <div className="flex items-center space-x-2">
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
+                              <span className="text-white text-sm font-medium">
+                                {file.uploadedBy.charAt(0)}
+                              </span>
+                            </div>
+                            <span className="text-white text-sm font-medium">
+                              {file.uploadedBy}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center space-x-2 text-sm text-gray-400">
+                            <Calendar className="w-4 h-4" />
+                            <span>{formatDate(file.uploadedAt)}</span>
+                          </div>
+
+                          <div className="flex items-center space-x-2">
+                            {file.tags.slice(0, 3).map((tag) => (
+                              <span key={tag} className="px-2 py-1 bg-white/10 rounded-full text-xs text-gray-400">
+                                {tag}
+                              </span>
+                            ))}
+                            {file.tags.length > 3 && (
+                              <span className="text-xs text-gray-500">+{file.tags.length - 3}</span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button className="p-2 rounded-lg hover:bg-white/10 transition-colors">
+                            <Eye className="w-4 h-4 text-gray-400" />
+                          </button>
+                          <button className="p-2 rounded-lg hover:bg-white/10 transition-colors">
+                            <Download className="w-4 h-4 text-gray-400" />
+                          </button>
+                          <button className="p-2 rounded-lg hover:bg-white/10 transition-colors">
+                            <Share2 className="w-4 h-4 text-gray-400" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </motion.div>
+        )}
+
+        {/* Empty State */}
+        {sortedFiles.length === 0 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6 }}
+            className="text-center py-12"
+          >
+            <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-white/10 flex items-center justify-center">
+              <Folder className="w-12 h-12 text-gray-400" />
+            </div>
+            <h3 className="text-xl font-semibold text-white mb-2">No files found</h3>
+            <p className="text-gray-400 mb-6">Try adjusting your search or upload new files</p>
+            <HolographicButton onClick={() => router.push('/hub/upload')}>
+              <Upload className="w-4 h-4" />
+              Upload Files
+            </HolographicButton>
+          </motion.div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default Hub;
