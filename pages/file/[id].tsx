@@ -60,6 +60,8 @@ const FileDetail = () => {
 
   const handleDownload = async () => {
     try {
+      if (!id) return;
+
       const response = await axios.get(`/api/files/${id}/download`, {
         responseType: 'blob'
       });
@@ -74,6 +76,14 @@ const FileDetail = () => {
       window.URL.revokeObjectURL(url);
     } catch (err) {
       console.error('Download failed:', err);
+      // Fallback: try navigating directly to the API route
+      try {
+        if (id) {
+          window.location.href = `/api/files/${id}/download`;
+        }
+      } catch (e) {
+        // ignore
+      }
     }
   };
 
