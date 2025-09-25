@@ -7,6 +7,13 @@ Built with **Next.js, TailwindCSS, and more**, it provides seamless **real-time 
 
 ---
 
+## 🖼 Project Preview
+
+<!-- Paste or replace the image below -->
+![Add your project screenshot here](docs/preview.png)
+
+---
+
 ## ✨ Features
 
 - 🔑 **Authentication** – Secure Google login via NextAuth  
@@ -54,14 +61,13 @@ cp .env.example .env.local
 ```
 
 Fill values in `.env.local`:
-
 ```
 MONGODB_URI=your_mongodb_connection_string
 NEXTAUTH_URL=http://localhost:3000
 GOOGLE_CLIENT_ID=your_google_client_id
 GOOGLE_CLIENT_SECRET=your_google_client_secret
 NEXTAUTH_SECRET=your_random_secret
-SOCKET_URL=http://localhost:3001
+NEXT_PUBLIC_SOCKET_URL=http://localhost:3001
 ```
 
 ### 4️⃣ Run the Development Server
@@ -73,6 +79,21 @@ npm run dev
 Open 👉 [http://localhost:3000](http://localhost:3000)
 
 ---
+
+## 📜 NPM Scripts
+
+- `dev`: Start Next.js development server
+- `build`: Build the Next.js app (lint disabled via `--no-lint`)
+- `start`: Start the production server
+- `server`: Start the Socket.IO server on port 3001
+- `dev:full`: Run Next.js and Socket.IO together
+- `dev:next`: Run only Next.js
+- `dev:socket`: Run only the Socket.IO server
+- `lint`: Run ESLint on `.js`, `.ts`, `.tsx`
+
+Notes:
+- The Socket.IO server defaults to `http://localhost:3001`.
+- If port 3000 is in use, Next.js may automatically use another port (e.g., 3001).
 
 ## ✅ Verification Checklist
 
@@ -124,7 +145,7 @@ UniMind/
 ├── pages/
 │   ├── _app.js
 │   ├── _document.js
-│   ├── index.js               # Landing page (Google Auth)
+│   ├── index.tsx              # Landing page (Google Auth)
 │   └── api/
 │       ├── auth/
 │       │   └── [...nextauth].js   # NextAuth config
