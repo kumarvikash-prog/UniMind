@@ -42,37 +42,37 @@ export const RealtimeChat = ({ fileId, taskId, roomType, onMessageSent }: Realti
   const [fallbackMessages, setFallbackMessages] = useState([]);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
 
-  // Load existing messages from API
+  // Load existing messages from API (always fetch on mount/room change)
   useEffect(() => {
     const fetchMessages = async () => {
-      if (!connected) {
-        setIsLoadingMessages(true);
-        try {
-          const params = new URLSearchParams();
-          if (fileId) params.append('fileId', fileId);
-          if (taskId) params.append('taskId', taskId);
-          if (roomType === 'general') params.append('room', 'general');
+      setIsLoadingMessages(true);
+      try {
+        const params = new URLSearchParams();
+        if (fileId) params.append('fileId', fileId);
+        if (taskId) params.append('taskId', taskId);
+        if (roomType === 'general') params.append('room', 'general');
 
-          const response = await axios.get(`/api/messages?${params.toString()}`);
-          setFallbackMessages(response.data);
-        } catch (error) {
-          console.error('Failed to fetch messages:', error);
-        } finally {
-          setIsLoadingMessages(false);
-        }
+        const response = await axios.get(`/api/messages?${params.toString()}`);
+        setFallbackMessages(response.data);
+      } catch (error) {
+        console.error('Failed to fetch messages:', error);
+      } finally {
+        setIsLoadingMessages(false);
       }
     };
 
     fetchMessages();
-  }, [fileId, taskId, roomType, connected]);
+  }, [fileId, taskId, roomType]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, fallbackMessages]);
 
-  // Use real-time messages if connected, otherwise use fallback
-  const displayMessages = connected ? messages : fallbackMessages;
+  // Merge persisted history with realtime updates
+  const displayMessages = connected && messages.length > 0
+    ? [...fallbackMessages, ...messages]
+    : fallbackMessages;
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -272,7 +272,7 @@ export const RealtimeChat = ({ fileId, taskId, roomType, onMessageSent }: Realti
               onChange={handleInputChange}
               placeholder="Type your message..."
               className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              disabled={!connected}
+              disabled={false}
             />
             <button
               type="button"
@@ -283,7 +283,7 @@ export const RealtimeChat = ({ fileId, taskId, roomType, onMessageSent }: Realti
           </div>
           <button
             type="submit"
-            disabled={!newMessage.trim() || !connected}
+            disabled={!newMessage.trim()}
             className="px-6 py-3 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-600 disabled:cursor-not-allowed rounded-lg text-white font-medium transition-colors flex items-center space-x-2"
           >
             <Send className="w-4 h-4" />

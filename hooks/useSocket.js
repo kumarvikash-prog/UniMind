@@ -61,11 +61,15 @@ export const useSocketRoom = (roomType, roomId) => {
   const [typingUsers, setTypingUsers] = useState([]);
 
   useEffect(() => {
-    if (!socket || !connected || !roomId) return;
+    if (!socket || !connected) return;
 
-    // Join room
-    const roomName = `${roomType}-room`;
-    socket.emit(roomName, roomId);
+    // Join the appropriate room on the server with matching event names
+    const joinEvent = roomType === 'general' ? 'join-general-room' : roomType === 'file' ? 'join-file-room' : 'join-task-room';
+    if (roomType === 'general') {
+      socket.emit(joinEvent);
+    } else if (roomId) {
+      socket.emit(joinEvent, roomId);
+    }
 
     // Listen for new messages
     const handleNewMessage = (message) => {
