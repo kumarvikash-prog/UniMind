@@ -272,10 +272,22 @@ const Contributions = () => {
                           </div>
                         )}
 
-                        {contribution.type === 'message' && contribution.metadata?.messageCount && (
-                          <div className="flex items-center space-x-2 text-sm text-gray-400">
-                            <MessageSquare className="w-4 h-4" />
-                            <span>{contribution.metadata.messageCount} messages</span>
+                        {contribution.type === 'message' && (
+                          <div className="flex items-center space-x-3">
+                            {contribution.metadata?.messageCount && (
+                              <div className="flex items-center space-x-2 text-sm text-gray-400">
+                                <MessageSquare className="w-4 h-4" />
+                                <span>{contribution.metadata.messageCount} message{contribution.metadata.messageCount > 1 ? 's' : ''}</span>
+                              </div>
+                            )}
+                            {/* Context badge */}
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${contribution.fileId
+                              ? 'bg-blue-500/20 text-blue-300'
+                              : contribution.taskId
+                                ? 'bg-purple-500/20 text-purple-300'
+                                : 'bg-gray-500/20 text-gray-300'}`}>
+                              {contribution.fileId ? 'File chat' : contribution.taskId ? 'Task chat' : 'General chat'}
+                            </span>
                           </div>
                         )}
 

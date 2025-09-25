@@ -4,6 +4,7 @@ import dbConnect from "../../../lib/mongodb";
 import Message from "../../../models/Message";
 import User from "../../../models/User";
 import Contribution from "../../../models/Contribution";
+import File from "../../../models/File";
 
 export default async function handler(req, res) {
   const session = await getServerSession(req, res, authOptions);
@@ -70,11 +71,27 @@ export default async function handler(req, res) {
       const message = new Message(messageData);
       await message.save();
 
-      // Create contribution record
+      // Create contribution record with context-aware title
+      let fileName = null;
+      if (fileId) {
+        try {
+          const f = await File.findById(fileId).select('name');
+          fileName = f?.name || null;
+        } catch (e) {
+          // ignore lookup errors; fallback title will be used
+        }
+      }
+
+      const contextTitle = fileId
+        ? `Sent message in File${fileName ? `: ${fileName}` : ''}`
+        : taskId
+          ? 'Sent message in Task'
+          : 'Sent message in General';
+
       const contribution = new Contribution({
         user: currentUser._id,
         type: 'message',
-        title: `Sent message`,
+        title: contextTitle,
         description: content.substring(0, 100) + (content.length > 100 ? '...' : ''),
         messageId: message._id,
         fileId: fileId || null,
