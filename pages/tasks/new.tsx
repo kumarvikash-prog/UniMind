@@ -50,7 +50,7 @@ const NewTask = () => {
         contributions.map(c => c.user?.name).filter(Boolean)
       ));
       
-      setTeamMembers(uniqueUsers.map(name => ({ name, email: name.toLowerCase().replace(' ', '.') + '@example.com' })));
+      setTeamMembers(uniqueUsers.map((name: string) => ({ name, email: name.toLowerCase().replace(' ', '.') + '@example.com' })));
     } catch (err) {
       console.error('Failed to fetch team members:', err);
       // Fallback to mock data
