@@ -6,6 +6,10 @@
     "dev": "next dev",
     "build": "next build --no-lint",
     "start": "next start",
+    "server": "node server.js",
+    "dev:full": "node start-dev.js",
+    "dev:next": "next dev",
+    "dev:socket": "node server.js",
     "lint": "eslint --ext .js,.ts,.tsx ."
   },
   "dependencies": {
@@ -41,6 +45,7 @@
     "axios": "^1.6.7",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "concurrently": "^8.2.2",
     "date-fns": "^4.1.0",
     "embla-carousel-react": "^8.6.0",
     "formidable": "^3.5.4",

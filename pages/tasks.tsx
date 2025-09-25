@@ -18,19 +18,52 @@ import {
 } from "lucide-react";
 import { AuthenticatedNavbar } from "../components/AuthenticatedNavbar";
 import { HolographicButton } from "../components/HolographicButton";
+import axios from "axios";
 
 const Tasks = () => {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [selectedAssignee, setSelectedAssignee] = useState<string>('all');
+  const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     if (status === "loading") return;
     if (!session) {
       router.push("/");
+      return;
     }
+    
+    // Fetch tasks from API
+    fetchTasks();
   }, [session, status, router]);
+
+  const fetchTasks = async () => {
+    try {
+      setLoading(true);
+      const params = new URLSearchParams();
+      if (selectedStatus !== 'all') params.append('status', selectedStatus);
+      if (selectedAssignee !== 'all') params.append('assignee', selectedAssignee);
+      
+      const response = await axios.get(`/api/tasks?${params.toString()}`);
+      setTasks(response.data);
+      setError(null);
+    } catch (err) {
+      console.error('Failed to fetch tasks:', err);
+      setError('Failed to load tasks');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Refetch tasks when filters change
+  useEffect(() => {
+    if (session) {
+      fetchTasks();
+    }
+  }, [selectedStatus, selectedAssignee]);
 
   if (status === "loading") {
     return (
@@ -44,64 +77,7 @@ const Tasks = () => {
     return null;
   }
 
-  // Mock data for tasks
-  const tasks = [
-    {
-      id: 1,
-      title: 'Review UI Design Mockups',
-      description: 'Review the latest design mockups and provide feedback on user experience',
-      status: 'in-progress',
-      priority: 'high',
-      assignee: { name: 'Alice Johnson', avatar: '/api/placeholder/32/32' },
-      dueDate: '2024-01-20',
-      createdAt: '2024-01-15',
-      tags: ['design', 'ui', 'review']
-    },
-    {
-      id: 2,
-      title: 'Implement Authentication System',
-      description: 'Set up Google OAuth integration and user management',
-      status: 'completed',
-      priority: 'high',
-      assignee: { name: 'Bob Smith', avatar: '/api/placeholder/32/32' },
-      dueDate: '2024-01-18',
-      createdAt: '2024-01-10',
-      tags: ['backend', 'auth', 'security']
-    },
-    {
-      id: 3,
-      title: 'Write API Documentation',
-      description: 'Create comprehensive API documentation for the project',
-      status: 'todo',
-      priority: 'medium',
-      assignee: { name: 'Charlie Brown', avatar: '/api/placeholder/32/32' },
-      dueDate: '2024-01-25',
-      createdAt: '2024-01-12',
-      tags: ['documentation', 'api']
-    },
-    {
-      id: 4,
-      title: 'Database Optimization',
-      description: 'Optimize database queries and add proper indexing',
-      status: 'in-progress',
-      priority: 'medium',
-      assignee: { name: 'Diana Prince', avatar: '/api/placeholder/32/32' },
-      dueDate: '2024-01-22',
-      createdAt: '2024-01-14',
-      tags: ['database', 'optimization', 'performance']
-    },
-    {
-      id: 5,
-      title: 'Mobile Responsiveness Testing',
-      description: 'Test and fix mobile responsiveness issues across all pages',
-      status: 'todo',
-      priority: 'low',
-      assignee: { name: 'Alice Johnson', avatar: '/api/placeholder/32/32' },
-      dueDate: '2024-01-28',
-      createdAt: '2024-01-16',
-      tags: ['mobile', 'testing', 'responsive']
-    }
-  ];
+  // Helper functions for task data
 
   const teamMembers = [
     { id: 'all', name: 'All Members' },
@@ -147,7 +123,7 @@ const Tasks = () => {
 
   const filteredTasks = tasks.filter(task => {
     const statusMatch = selectedStatus === 'all' || task.status === selectedStatus;
-    const assigneeMatch = selectedAssignee === 'all' || task.assignee.name.toLowerCase().includes(selectedAssignee.toLowerCase());
+    const assigneeMatch = selectedAssignee === 'all' || task.assignee?.name?.toLowerCase().includes(selectedAssignee.toLowerCase());
     return statusMatch && assigneeMatch;
   });
 
@@ -252,13 +228,28 @@ const Tasks = () => {
         </motion.div>
 
         {/* Tasks List */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="space-y-4"
-        >
-          {filteredTasks.map((task, index) => {
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+          </div>
+        ) : error ? (
+          <div className="text-center py-12">
+            <p className="text-red-400 mb-4">{error}</p>
+            <button 
+              onClick={fetchTasks}
+              className="px-4 py-2 bg-blue-500 hover:bg-blue-600 rounded-lg text-white"
+            >
+              Retry
+            </button>
+          </div>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="space-y-4"
+          >
+            {filteredTasks.map((task, index) => {
             const StatusIcon = getStatusIcon(task.status);
             
             return (
@@ -301,11 +292,11 @@ const Tasks = () => {
                           <div className="flex items-center space-x-2">
                             <div className="w-8 h-8 rounded-full bg-gradient-to-r from-green-500 to-blue-500 flex items-center justify-center">
                               <span className="text-white text-sm font-medium">
-                                {task.assignee.name.charAt(0)}
+                                {task.assignee?.name?.charAt(0) || 'U'}
                               </span>
                             </div>
                             <span className="text-white text-sm font-medium">
-                              {task.assignee.name}
+                              {task.assignee?.name || 'Unassigned'}
                             </span>
                           </div>
 
@@ -356,10 +347,11 @@ const Tasks = () => {
               </motion.div>
             );
           })}
-        </motion.div>
+          </motion.div>
+        )}
 
         {/* Empty State */}
-        {filteredTasks.length === 0 && (
+        {filteredTasks.length === 0 && !loading && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

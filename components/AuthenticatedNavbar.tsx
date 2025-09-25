@@ -12,8 +12,10 @@ import {
   X,
   LogOut,
   User,
-  Settings
+  Settings,
+  MessageSquare
 } from "lucide-react";
+import { NotificationCenter } from "./NotificationCenter";
 
 interface AuthenticatedNavbarProps {
   currentPage?: string;
@@ -31,6 +33,7 @@ export const AuthenticatedNavbar = ({ currentPage }: AuthenticatedNavbarProps) =
     { name: "Tasks", href: "/tasks", icon: Clock },
     { name: "Analytics", href: "/analytics", icon: BarChart3 },
     { name: "Hub", href: "/hub", icon: FolderOpen },
+    { name: "Chat", href: "/chat", icon: MessageSquare },
   ];
 
   const handleLogout = async () => {
@@ -87,6 +90,11 @@ export const AuthenticatedNavbar = ({ currentPage }: AuthenticatedNavbarProps) =
 
           {/* User Menu */}
           <div className="flex items-center space-x-4">
+            {/* Notifications */}
+            <div className="hidden md:block">
+              <NotificationCenter />
+            </div>
+
             {/* Desktop User Menu */}
             <div className="hidden md:block relative">
               <motion.button

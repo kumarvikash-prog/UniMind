@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { AuthenticatedNavbar } from "../components/AuthenticatedNavbar";
 import { HolographicButton } from "../components/HolographicButton";
+import axios from "axios";
 
 const Hub = () => {
   const { data: session, status } = useSession();
@@ -32,13 +33,46 @@ const Hub = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('date');
+  const [files, setFiles] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     if (status === "loading") return;
     if (!session) {
       router.push("/");
+      return;
     }
+    
+    // Fetch files from API
+    fetchFiles();
   }, [session, status, router]);
+
+  const fetchFiles = async () => {
+    try {
+      setLoading(true);
+      const params = new URLSearchParams();
+      if (selectedCategory !== 'all') params.append('category', selectedCategory);
+      if (searchQuery) params.append('search', searchQuery);
+      params.append('sortBy', sortBy);
+      
+      const response = await axios.get(`/api/files?${params.toString()}`);
+      setFiles(response.data);
+      setError(null);
+    } catch (err) {
+      console.error('Failed to fetch files:', err);
+      setError('Failed to load files');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Refetch files when filters change
+  useEffect(() => {
+    if (session) {
+      fetchFiles();
+    }
+  }, [selectedCategory, searchQuery, sortBy]);
 
   if (status === "loading") {
     return (
@@ -52,81 +86,7 @@ const Hub = () => {
     return null;
   }
 
-  // Mock data for files
-  const files = [
-    {
-      id: 1,
-      name: 'Project Requirements.pdf',
-      type: 'pdf',
-      size: '2.4 MB',
-      uploadedBy: 'Alice Johnson',
-      uploadedAt: '2024-01-15T10:30:00Z',
-      category: 'documents',
-      description: 'Comprehensive project requirements document',
-      downloadCount: 12,
-      tags: ['requirements', 'project', 'planning']
-    },
-    {
-      id: 2,
-      name: 'Design Mockups v2.0.fig',
-      type: 'fig',
-      size: '5.1 MB',
-      uploadedBy: 'Charlie Brown',
-      uploadedAt: '2024-01-14T16:45:00Z',
-      category: 'design',
-      description: 'Updated design mockups with new features',
-      downloadCount: 8,
-      tags: ['design', 'ui', 'mockups']
-    },
-    {
-      id: 3,
-      name: 'Team Photo.jpg',
-      type: 'jpg',
-      size: '1.2 MB',
-      uploadedBy: 'Bob Smith',
-      uploadedAt: '2024-01-13T14:20:00Z',
-      category: 'images',
-      description: 'Team photo from last meeting',
-      downloadCount: 15,
-      tags: ['team', 'photo', 'meeting']
-    },
-    {
-      id: 4,
-      name: 'Database Schema.sql',
-      type: 'sql',
-      size: '856 KB',
-      uploadedBy: 'Diana Prince',
-      uploadedAt: '2024-01-12T09:15:00Z',
-      category: 'code',
-      description: 'Database schema and migration scripts',
-      downloadCount: 6,
-      tags: ['database', 'schema', 'sql']
-    },
-    {
-      id: 5,
-      name: 'Presentation.pptx',
-      type: 'pptx',
-      size: '8.3 MB',
-      uploadedBy: 'Alice Johnson',
-      uploadedAt: '2024-01-11T11:30:00Z',
-      category: 'documents',
-      description: 'Quarterly project presentation',
-      downloadCount: 20,
-      tags: ['presentation', 'quarterly', 'project']
-    },
-    {
-      id: 6,
-      name: 'Video Tutorial.mp4',
-      type: 'mp4',
-      size: '45.2 MB',
-      uploadedBy: 'Charlie Brown',
-      uploadedAt: '2024-01-10T15:45:00Z',
-      category: 'videos',
-      description: 'Tutorial video for new features',
-      downloadCount: 25,
-      tags: ['tutorial', 'video', 'features']
-    }
-  ];
+  // Helper functions for file data
 
   const categories = [
     { id: 'all', name: 'All Files', icon: Folder },
@@ -178,33 +138,32 @@ const Hub = () => {
     }
   };
 
-  const formatFileSize = (size: string) => size;
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString();
   };
 
-  const filteredFiles = files.filter(file => {
-    const matchesSearch = file.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         file.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         file.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
-    const matchesCategory = selectedCategory === 'all' || file.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
-
-  const sortedFiles = [...filteredFiles].sort((a, b) => {
-    switch (sortBy) {
-      case 'name':
-        return a.name.localeCompare(b.name);
-      case 'size':
-        return parseFloat(b.size) - parseFloat(a.size);
-      case 'downloads':
-        return b.downloadCount - a.downloadCount;
-      case 'date':
-      default:
-        return new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime();
+  const formatFileSize = (sizeString: string) => {
+    // If it's already formatted (e.g., "2.4 MB"), return as is
+    if (sizeString.includes('MB') || sizeString.includes('KB') || sizeString.includes('GB')) {
+      return sizeString;
     }
-  });
+    // If it's a number in bytes, format it
+    const bytes = parseInt(sizeString);
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    return (bytes / (1024 * 1024 * 1024)).toFixed(1) + ' GB';
+  };
+
+  const handleFileDelete = async (fileId: string) => {
+    try {
+      await axios.delete(`/api/files/${fileId}`);
+      fetchFiles(); // Refresh the list
+    } catch (err) {
+      console.error('Failed to delete file:', err);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
@@ -295,14 +254,28 @@ const Hub = () => {
         </motion.div>
 
         {/* Files Display */}
-        {viewMode === 'grid' ? (
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+          </div>
+        ) : error ? (
+          <div className="text-center py-12">
+            <p className="text-red-400 mb-4">{error}</p>
+            <button 
+              onClick={fetchFiles}
+              className="px-4 py-2 bg-blue-500 hover:bg-blue-600 rounded-lg text-white"
+            >
+              Retry
+            </button>
+          </div>
+        ) : viewMode === 'grid' ? (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.2 }}
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
           >
-            {sortedFiles.map((file, index) => {
+            {files.map((file, index) => {
               const FileIcon = getFileIcon(file.type);
               
               return (
@@ -333,7 +306,7 @@ const Hub = () => {
                   <div className="space-y-2 mb-4">
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-gray-400">Size</span>
-                      <span className="text-white">{formatFileSize(file.size)}</span>
+                      <span className="text-white">{file.size}</span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-gray-400">Downloads</span>
@@ -349,10 +322,10 @@ const Hub = () => {
                     <div className="flex items-center space-x-2">
                       <div className="w-6 h-6 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
                         <span className="text-white text-xs font-medium">
-                          {file.uploadedBy.charAt(0)}
+                          {file.uploadedBy?.name?.charAt(0) || 'U'}
                         </span>
                       </div>
-                      <span className="text-gray-400 text-sm">{file.uploadedBy}</span>
+                      <span className="text-gray-400 text-sm">{file.uploadedBy?.name || 'Unknown'}</span>
                     </div>
                     <div className="flex items-center space-x-1">
                       <button className="p-1 rounded hover:bg-white/10">
@@ -374,7 +347,7 @@ const Hub = () => {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="space-y-4"
           >
-            {sortedFiles.map((file, index) => {
+            {files.map((file, index) => {
               const FileIcon = getFileIcon(file.type);
               
               return (
@@ -410,11 +383,11 @@ const Hub = () => {
                           <div className="flex items-center space-x-2">
                             <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
                               <span className="text-white text-sm font-medium">
-                                {file.uploadedBy.charAt(0)}
+                                {file.uploadedBy?.name?.charAt(0) || 'U'}
                               </span>
                             </div>
                             <span className="text-white text-sm font-medium">
-                              {file.uploadedBy}
+                              {file.uploadedBy?.name || 'Unknown'}
                             </span>
                           </div>
 
@@ -456,7 +429,7 @@ const Hub = () => {
         )}
 
         {/* Empty State */}
-        {sortedFiles.length === 0 && (
+        {files.length === 0 && !loading && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

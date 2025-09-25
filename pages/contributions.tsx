@@ -14,19 +14,59 @@ import {
   Eye
 } from "lucide-react";
 import { AuthenticatedNavbar } from "../components/AuthenticatedNavbar";
+import { useRealtimeUpdates } from "../hooks/useRealtimeUpdates";
+import axios from "axios";
 
 const Contributions = () => {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [viewMode, setViewMode] = useState<'master' | 'member'>('master');
   const [selectedMember, setSelectedMember] = useState<string>('all');
+  const [contributions, setContributions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const { contributions: realtimeContributions, connected } = useRealtimeUpdates();
 
   useEffect(() => {
     if (status === "loading") return;
     if (!session) {
       router.push("/");
+      return;
     }
+    
+    fetchContributions();
   }, [session, status, router]);
+
+  const fetchContributions = async () => {
+    try {
+      setLoading(true);
+      const params = new URLSearchParams();
+      if (selectedMember !== 'all') params.append('user', selectedMember);
+      
+      const response = await axios.get(`/api/contributions?${params.toString()}`);
+      setContributions(response.data);
+      setError(null);
+    } catch (err) {
+      console.error('Failed to fetch contributions:', err);
+      setError('Failed to load contributions');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Refetch when member filter changes
+  useEffect(() => {
+    if (session) {
+      fetchContributions();
+    }
+  }, [selectedMember]);
+
+  // Update contributions when real-time updates arrive
+  useEffect(() => {
+    if (realtimeContributions.length > 0) {
+      setContributions(prev => [...realtimeContributions, ...prev]);
+    }
+  }, [realtimeContributions]);
 
   if (status === "loading") {
     return (
@@ -40,54 +80,11 @@ const Contributions = () => {
     return null;
   }
 
-  // Mock data for contributions
-  const contributions = [
-    {
-      id: 1,
-      type: 'file',
-      title: 'Project Requirements Document',
-      user: { name: 'Alice Johnson', avatar: '/api/placeholder/32/32' },
-      timestamp: '2024-01-15T10:30:00Z',
-      description: 'Uploaded comprehensive project requirements',
-      fileType: 'pdf',
-      size: '2.4 MB'
-    },
-    {
-      id: 2,
-      type: 'message',
-      title: 'Team Discussion: UI Design',
-      user: { name: 'Bob Smith', avatar: '/api/placeholder/32/32' },
-      timestamp: '2024-01-15T09:15:00Z',
-      description: 'Started discussion about new UI components',
-      messageCount: 12
-    },
-    {
-      id: 3,
-      type: 'file',
-      title: 'Design Mockups v2.0',
-      user: { name: 'Charlie Brown', avatar: '/api/placeholder/32/32' },
-      timestamp: '2024-01-14T16:45:00Z',
-      description: 'Updated design mockups with new features',
-      fileType: 'fig',
-      size: '5.1 MB'
-    },
-    {
-      id: 4,
-      type: 'task',
-      title: 'Completed: Database Schema Review',
-      user: { name: 'Diana Prince', avatar: '/api/placeholder/32/32' },
-      timestamp: '2024-01-14T14:20:00Z',
-      description: 'Reviewed and approved database schema changes',
-      status: 'completed'
-    }
-  ];
-
+  // Get unique team members from contributions
   const teamMembers = [
     { id: 'all', name: 'All Members', avatar: null },
-    { id: 'alice', name: 'Alice Johnson', avatar: '/api/placeholder/32/32' },
-    { id: 'bob', name: 'Bob Smith', avatar: '/api/placeholder/32/32' },
-    { id: 'charlie', name: 'Charlie Brown', avatar: '/api/placeholder/32/32' },
-    { id: 'diana', name: 'Diana Prince', avatar: '/api/placeholder/32/32' }
+    ...Array.from(new Set(contributions.map(c => c.user?.name).filter(Boolean)))
+      .map(name => ({ id: name.toLowerCase().replace(' ', ''), name, avatar: null }))
   ];
 
   const getContributionIcon = (type: string) => {
@@ -110,6 +107,11 @@ const Contributions = () => {
     return date.toLocaleDateString();
   };
 
+  const filteredContributions = contributions.filter(contribution => {
+    if (selectedMember === 'all') return true;
+    return contribution.user?.name?.toLowerCase().includes(selectedMember.toLowerCase());
+  });
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
       <AuthenticatedNavbar currentPage="contributions" />
@@ -128,6 +130,10 @@ const Contributions = () => {
               <p className="text-gray-400">Track team contributions and activity timeline</p>
             </div>
             <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2 text-sm">
+                <div className={`w-2 h-2 rounded-full ${connected ? 'bg-green-400' : 'bg-red-400'}`} />
+                <span className="text-gray-400">{connected ? 'Live Updates' : 'Offline'}</span>
+              </div>
               <button className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors">
                 <Search className="w-5 h-5 text-white" />
               </button>
@@ -182,25 +188,40 @@ const Contributions = () => {
         </motion.div>
 
         {/* Contributions Timeline */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="space-y-4"
-        >
-          {contributions.map((contribution, index) => {
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+          </div>
+        ) : error ? (
+          <div className="text-center py-12">
+            <p className="text-red-400 mb-4">{error}</p>
+            <button 
+              onClick={fetchContributions}
+              className="px-4 py-2 bg-blue-500 hover:bg-blue-600 rounded-lg text-white"
+            >
+              Retry
+            </button>
+          </div>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="space-y-4"
+          >
+            {filteredContributions.map((contribution, index) => {
             const IconComponent = getContributionIcon(contribution.type);
             
             return (
               <motion.div
-                key={contribution.id}
+                key={contribution._id}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.4, delay: index * 0.1 }}
                 className="glass-card p-6 hover:bg-white/10 transition-colors cursor-pointer"
                 onClick={() => {
-                  if (contribution.type === 'file') {
-                    router.push(`/file/${contribution.id}`);
+                  if (contribution.type === 'file' && contribution.fileId) {
+                    router.push(`/file/${contribution.fileId}`);
                   }
                 }}
               >
@@ -218,7 +239,7 @@ const Contributions = () => {
                       </h3>
                       <span className="text-sm text-gray-400 flex items-center space-x-1">
                         <Clock className="w-4 h-4" />
-                        <span>{formatTimestamp(contribution.timestamp)}</span>
+                        <span>{formatTimestamp(contribution.createdAt)}</span>
                       </span>
                     </div>
 
@@ -239,29 +260,33 @@ const Contributions = () => {
                         </div>
 
                         {/* Additional Info */}
-                        {contribution.type === 'file' && (
+                        {contribution.type === 'file' && contribution.metadata?.fileType && (
                           <div className="flex items-center space-x-2 text-sm text-gray-400">
-                            <span className="uppercase font-medium">{contribution.fileType}</span>
-                            <span>•</span>
-                            <span>{contribution.size}</span>
+                            <span className="uppercase font-medium">{contribution.metadata.fileType}</span>
+                            {contribution.metadata.fileSize && (
+                              <>
+                                <span>•</span>
+                                <span>{contribution.metadata.fileSize}</span>
+                              </>
+                            )}
                           </div>
                         )}
 
-                        {contribution.type === 'message' && (
+                        {contribution.type === 'message' && contribution.metadata?.messageCount && (
                           <div className="flex items-center space-x-2 text-sm text-gray-400">
                             <MessageSquare className="w-4 h-4" />
-                            <span>{contribution.messageCount} messages</span>
+                            <span>{contribution.metadata.messageCount} messages</span>
                           </div>
                         )}
 
-                        {contribution.type === 'task' && (
+                        {contribution.type === 'task' && contribution.metadata?.taskStatus && (
                           <div className="flex items-center space-x-2">
                             <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              contribution.status === 'completed' 
+                              contribution.metadata.taskStatus === 'completed' 
                                 ? 'bg-green-500/20 text-green-400' 
                                 : 'bg-yellow-500/20 text-yellow-400'
                             }`}>
-                              {contribution.status}
+                              {contribution.metadata.taskStatus}
                             </span>
                           </div>
                         )}
@@ -272,8 +297,11 @@ const Contributions = () => {
                         <button className="p-2 rounded-lg hover:bg-white/10 transition-colors">
                           <Eye className="w-4 h-4 text-gray-400" />
                         </button>
-                        {contribution.type === 'file' && (
-                          <button className="p-2 rounded-lg hover:bg-white/10 transition-colors">
+                        {contribution.type === 'file' && contribution.fileId && (
+                          <button 
+                            onClick={() => router.push(`/file/${contribution.fileId}`)}
+                            className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+                          >
                             <Download className="w-4 h-4 text-gray-400" />
                           </button>
                         )}
@@ -284,7 +312,24 @@ const Contributions = () => {
               </motion.div>
             );
           })}
-        </motion.div>
+          </motion.div>
+        )}
+
+        {/* Empty State */}
+        {filteredContributions.length === 0 && !loading && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6 }}
+            className="text-center py-12"
+          >
+            <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-white/10 flex items-center justify-center">
+              <Users className="w-12 h-12 text-gray-400" />
+            </div>
+            <h3 className="text-xl font-semibold text-white mb-2">No contributions found</h3>
+            <p className="text-gray-400 mb-6">Start by uploading files or creating tasks to see activity here</p>
+          </motion.div>
+        )}
 
         {/* Load More */}
         <motion.div
