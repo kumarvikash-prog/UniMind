@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { HolographicButton } from "../HolographicButton";
+import { GoogleSignInButton } from "../GoogleSignInButton";
 import { ArrowRight, Zap } from "lucide-react";
 import { Navigation } from "../Navigation";
 import { FeatureHighlights } from "../FeatureHighlights";
@@ -55,11 +56,9 @@ export const HeroSection = () => {
           transition={{ duration: 0.8, delay: 1 }}
           className="flex flex-col sm:flex-row items-center justify-center gap-6"
         >
-          <HolographicButton variant="hero" onClick={handleGetStarted}>
-            <Zap className="w-5 h-5" />
+          <GoogleSignInButton>
             Continue with Google
-            <ArrowRight className="w-5 h-5" />
-          </HolographicButton>
+          </GoogleSignInButton>
         </motion.div>
 
         {/* Feature Highlights */}

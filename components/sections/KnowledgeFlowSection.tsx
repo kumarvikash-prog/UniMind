@@ -75,8 +75,8 @@ export const KnowledgeFlowSection = () => {
 
         {/* Flow Visualization */}
         <div className="relative">
-          {/* Connection Lines */}
-          <div className="hidden lg:block absolute inset-0">
+          {/* Connection Lines - disabled to prevent stray thin line artifacts */}
+          <div className="hidden">
             {flowSteps.slice(0, -1).map((_, index) => (
               <motion.div
                 key={index}
