@@ -280,12 +280,12 @@ const Hub = () => {
               
               return (
                 <motion.div
-                  key={file.id}
+                  key={(file as any)._id ?? (file as any).id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, delay: index * 0.1 }}
                   className="glass-card p-6 hover:bg-white/10 transition-colors cursor-pointer group"
-                  onClick={() => router.push(`/file/${file.id}`)}
+                  onClick={() => router.push(`/file/${(file as any)._id ?? (file as any).id}`)}
                 >
                   <div className="flex items-center justify-between mb-4">
                     <div className={`w-12 h-12 rounded-lg bg-gradient-to-r ${getFileTypeColor(file.type)} flex items-center justify-center`}>
@@ -352,12 +352,12 @@ const Hub = () => {
               
               return (
                 <motion.div
-                  key={file.id}
+                  key={(file as any)._id ?? (file as any).id}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.4, delay: index * 0.1 }}
                   className="glass-card p-6 hover:bg-white/10 transition-colors cursor-pointer group"
-                  onClick={() => router.push(`/file/${file.id}`)}
+                  onClick={() => router.push(`/file/${(file as any)._id ?? (file as any).id}`)}
                 >
                   <div className="flex items-center space-x-4">
                     <div className={`w-12 h-12 rounded-lg bg-gradient-to-r ${getFileTypeColor(file.type)} flex items-center justify-center flex-shrink-0`}>

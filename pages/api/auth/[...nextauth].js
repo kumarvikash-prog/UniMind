@@ -31,6 +31,11 @@ export const authOptions = {
       await dbConnect();
       const dbUser = await User.findOne({ email: session.user.email });
       session.user.id = dbUser?._id?.toString();
+      // Ensure latest name/image are reflected in the session
+      if (dbUser) {
+        session.user.name = dbUser.name || session.user.name;
+        session.user.image = dbUser.image || session.user.image;
+      }
       return session;
     },
     async redirect({ url, baseUrl }) {

@@ -1,6 +1,6 @@
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { 
   User, 
@@ -13,8 +13,12 @@ import {
 import { AuthenticatedNavbar } from "../components/AuthenticatedNavbar";
 
 const Profile = () => {
-  const { data: session, status } = useSession();
+  const { data: session, status, update } = useSession();
   const router = useRouter();
+  const [isEditing, setIsEditing] = useState(false);
+  const [nameInput, setNameInput] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (status === "loading") return;
@@ -35,6 +39,45 @@ const Profile = () => {
   if (!session) {
     return null;
   }
+
+  const startEdit = () => {
+    setNameInput(session.user.name || "");
+    setIsEditing(true);
+    setError("");
+  };
+
+  const cancelEdit = () => {
+    setIsEditing(false);
+    setError("");
+  };
+
+  const saveName = async () => {
+    const trimmed = nameInput.trim();
+    if (!trimmed) {
+      setError("Name cannot be empty");
+      return;
+    }
+    try {
+      setIsSaving(true);
+      setError("");
+      const res = await fetch("/api/users/me", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: trimmed }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to update name");
+      }
+      // Refresh session to reflect updated name in UI
+      await update();
+      setIsEditing(false);
+    } catch (e:any) {
+      setError(e.message || "Failed to update name");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
@@ -100,10 +143,21 @@ const Profile = () => {
               </div>
 
               {/* Edit Button */}
-              <button className="flex items-center space-x-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors">
-                <Edit className="w-4 h-4" />
-                <span>Edit</span>
-              </button>
+              {!isEditing ? (
+                <button onClick={startEdit} className="flex items-center space-x-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors">
+                  <Edit className="w-4 h-4" />
+                  <span>Edit</span>
+                </button>
+              ) : (
+                <div className="flex items-center space-x-2">
+                  <button onClick={saveName} disabled={isSaving} className="px-4 py-2 bg-green-500/20 text-green-300 hover:bg-green-500/30 rounded-lg transition-colors disabled:opacity-50">
+                    {isSaving ? "Saving..." : "Save"}
+                  </button>
+                  <button onClick={cancelEdit} disabled={isSaving} className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors disabled:opacity-50">
+                    Cancel
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Profile Details */}
@@ -111,9 +165,21 @@ const Profile = () => {
               <div className="space-y-4">
                 <div className="flex items-center space-x-3 p-4 bg-white/5 rounded-lg">
                   <User className="w-5 h-5 text-blue-400" />
-                  <div>
+                  <div className="flex-1">
                     <p className="text-sm text-gray-400">Full Name</p>
-                    <p className="text-white font-medium">{session.user.name}</p>
+                    {!isEditing ? (
+                      <p className="text-white font-medium">{session.user.name}</p>
+                    ) : (
+                      <input
+                        value={nameInput}
+                        onChange={(e) => setNameInput(e.target.value)}
+                        className="mt-1 w-full bg-transparent border border-white/20 rounded-md px-3 py-2 text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                        placeholder="Enter your name"
+                      />
+                    )}
+                    {error && (
+                      <p className="text-sm text-red-400 mt-2">{error}</p>
+                    )}
                   </div>
                 </div>
 
