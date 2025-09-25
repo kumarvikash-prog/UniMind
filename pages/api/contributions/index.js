@@ -3,6 +3,9 @@ import { authOptions } from "../auth/[...nextauth]";
 import dbConnect from "../../../lib/mongodb";
 import Contribution from "../../../models/Contribution";
 import User from "../../../models/User";
+import File from "../../../models/File";
+import Task from "../../../models/Task";
+import Message from "../../../models/Message";
 
 export default async function handler(req, res) {
   const session = await getServerSession(req, res, authOptions);

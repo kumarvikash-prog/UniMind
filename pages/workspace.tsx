@@ -37,7 +37,9 @@ const Workspace = () => {
   const fetchRecentActivity = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('/api/contributions?limit=5');
+      const response = await axios.get('/api/contributions?limit=5', {
+        withCredentials: true
+      });
       const contributions = response.data;
       
       const activities = contributions.map(contrib => ({
@@ -51,6 +53,16 @@ const Workspace = () => {
       setRecentActivity(activities);
     } catch (error) {
       console.error('Failed to fetch recent activity:', error);
+      
+      // Handle specific error cases
+      if (error.response?.status === 401) {
+        console.error('Authentication required - redirecting to login');
+        router.push('/');
+        return;
+      } else if (error.response?.status === 500) {
+        console.error('Server error:', error.response.data);
+      }
+      
       // Show empty state if no data
       setRecentActivity([]);
     } finally {
