@@ -69,10 +69,23 @@ export const RealtimeChat = ({ fileId, taskId, roomType, onMessageSent }: Realti
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, fallbackMessages]);
 
-  // Merge persisted history with realtime updates
-  const displayMessages = connected && messages.length > 0
-    ? [...fallbackMessages, ...messages]
-    : fallbackMessages;
+  // Merge persisted history with realtime updates (dedupe by _id or content+author+createdAt)
+  const displayMessages = (() => {
+    const base = [...fallbackMessages];
+    const seen = new Set<string>();
+    const result: any[] = [];
+    const add = (m: any) => {
+      const key = (m as any)._id || `${m.author?.email}-${m.content}-${m.createdAt}`;
+      if (seen.has(key)) return;
+      seen.add(key);
+      result.push(m);
+    };
+    base.forEach(add);
+    if (connected && messages.length > 0) {
+      messages.forEach(add);
+    }
+    return result;
+  })();
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,12 +109,12 @@ export const RealtimeChat = ({ fileId, taskId, roomType, onMessageSent }: Realti
         room: roomType === 'general' ? 'general' : undefined
       });
 
-      // If connected to Socket.IO, send real-time message
+      // Always optimistically append the saved message locally so the sender sees it immediately
+      setFallbackMessages(prev => [...prev, response.data]);
+
+      // If connected to Socket.IO, also emit so others receive it in real-time
       if (connected) {
         sendMessage(newMessage.trim(), messageData.author);
-      } else {
-        // If not connected, add to fallback messages
-        setFallbackMessages(prev => [...prev, response.data]);
       }
     } catch (error) {
       console.error('Failed to save message:', error);
