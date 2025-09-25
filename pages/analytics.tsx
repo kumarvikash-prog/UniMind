@@ -106,16 +106,39 @@ const Analytics = () => {
 
       const contributionData = Object.values(userContributions);
 
-      // Calculate weekly data (simplified)
-      const weeklyData = [
-        { day: 'Mon', contributions: Math.floor(contributions.length * 0.15), tasks: Math.floor(tasks.length * 0.2), files: Math.floor(files.length * 0.1) },
-        { day: 'Tue', contributions: Math.floor(contributions.length * 0.2), tasks: Math.floor(tasks.length * 0.25), files: Math.floor(files.length * 0.15) },
-        { day: 'Wed', contributions: Math.floor(contributions.length * 0.1), tasks: Math.floor(tasks.length * 0.1), files: Math.floor(files.length * 0.1) },
-        { day: 'Thu', contributions: Math.floor(contributions.length * 0.25), tasks: Math.floor(tasks.length * 0.3), files: Math.floor(files.length * 0.2) },
-        { day: 'Fri', contributions: Math.floor(contributions.length * 0.2), tasks: Math.floor(tasks.length * 0.15), files: Math.floor(files.length * 0.25) },
-        { day: 'Sat', contributions: Math.floor(contributions.length * 0.05), tasks: Math.floor(tasks.length * 0.0), files: Math.floor(files.length * 0.1) },
-        { day: 'Sun', contributions: Math.floor(contributions.length * 0.05), tasks: Math.floor(tasks.length * 0.0), files: Math.floor(files.length * 0.1) }
-      ];
+      // Calculate weekly data from real timestamps (current week Mon-Sun)
+      const daysOrder = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      const startOfWeek = (() => {
+        const now = new Date();
+        const day = now.getDay(); // 0=Sun .. 6=Sat
+        const diffToMonday = (day === 0 ? -6 : 1) - day; // shift so Monday is start
+        const monday = new Date(now);
+        monday.setHours(0, 0, 0, 0);
+        monday.setDate(now.getDate() + diffToMonday);
+        return monday;
+      })();
+
+      const dayRanges = daysOrder.map((_, idx) => {
+        const from = new Date(startOfWeek);
+        from.setDate(startOfWeek.getDate() + idx);
+        const to = new Date(from);
+        to.setDate(from.getDate() + 1);
+        return { from, to };
+      });
+
+      const countInRange = (items: any[], getDate: (x: any) => Date, from: Date, to: Date) => {
+        return items.filter((it) => {
+          const d = getDate(it);
+          return d >= from && d < to;
+        }).length;
+      };
+
+      const weeklyData = daysOrder.map((label, idx) => ({
+        day: label,
+        contributions: countInRange(contributions, (c) => new Date(c.createdAt), dayRanges[idx].from, dayRanges[idx].to),
+        tasks: countInRange(tasks, (t) => new Date(t.createdAt), dayRanges[idx].from, dayRanges[idx].to),
+        files: countInRange(files, (f) => new Date(f.uploadedAt || f.createdAt), dayRanges[idx].from, dayRanges[idx].to)
+      }));
 
       // Calculate activity types
       const activityTypes = [

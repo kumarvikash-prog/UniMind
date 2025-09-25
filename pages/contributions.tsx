@@ -16,10 +16,12 @@ import {
 import { AuthenticatedNavbar } from "../components/AuthenticatedNavbar";
 import { useRealtimeUpdates } from "../hooks/useRealtimeUpdates";
 import axios from "axios";
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
 
 const Contributions = () => {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
   const [viewMode, setViewMode] = useState<'master' | 'member'>('master');
   const [selectedMember, setSelectedMember] = useState<string>('all');
   const [contributions, setContributions] = useState([]);
@@ -35,6 +37,7 @@ const Contributions = () => {
     }
     
     fetchContributions();
+    setMounted(true);
   }, [session, status, router]);
 
   const fetchContributions = async () => {
@@ -112,11 +115,87 @@ const Contributions = () => {
     return contribution.user?.name?.toLowerCase().includes(selectedMember.toLowerCase());
   });
 
+  // Build daily contributions data for the last 7 days
+  const daysBack = 7;
+  const end = new Date();
+  end.setHours(23, 59, 59, 999);
+  const start = new Date(end);
+  start.setDate(end.getDate() - (daysBack - 1));
+
+  const dateKey = (d: Date) => d.toISOString().slice(0, 10);
+  const counts: Record<string, { date: string; files: number; messages: number; tasks: number; total: number }>= {};
+  for (let i = 0; i < daysBack; i++) {
+    const day = new Date(start);
+    day.setDate(start.getDate() + i);
+    const key = dateKey(day);
+    counts[key] = { date: key, files: 0, messages: 0, tasks: 0, total: 0 };
+  }
+
+  contributions.forEach((c: any) => {
+    const created = new Date(c.createdAt);
+    if (created >= start && created <= end) {
+      const key = dateKey(created);
+      if (!counts[key]) return;
+      if (c.type === 'file') counts[key].files++;
+      else if (c.type === 'message') counts[key].messages++;
+      else if (c.type === 'task') counts[key].tasks++;
+      counts[key].total++;
+    }
+  });
+
+  const chartData = Object.values(counts);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
       <AuthenticatedNavbar currentPage="contributions" />
       
       <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* Contributions Trend */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="glass-card p-6 mb-8"
+        >
+          <h3 className="text-xl font-semibold text-white mb-6">Contributions Trend (Last 7 days)</h3>
+          {mounted && chartData.length > 0 ? (
+            <div style={{ width: '100%', height: 280 }}>
+              <ResponsiveContainer>
+                <AreaChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.6}/>
+                      <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
+                    </linearGradient>
+                    <linearGradient id="colorFiles" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#ec4899" stopOpacity={0.5}/>
+                      <stop offset="95%" stopColor="#ec4899" stopOpacity={0}/>
+                    </linearGradient>
+                    <linearGradient id="colorTasks" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.5}/>
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                    </linearGradient>
+                    <linearGradient id="colorMessages" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.5}/>
+                      <stop offset="95%" stopColor="#06b6d4" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+                  <XAxis dataKey="date" stroke="#9ca3af" tick={{ fontSize: 12 }} />
+                  <YAxis stroke="#9ca3af" tick={{ fontSize: 12 }} allowDecimals={false} />
+                  <Tooltip contentStyle={{ background: 'rgba(17,24,39,0.9)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8 }} labelStyle={{ color: '#fff' }} />
+                  <Legend wrapperStyle={{ color: '#fff' }} />
+                  <Area type="monotone" dataKey="total" name="Total" stroke="#8b5cf6" fill="url(#colorTotal)" strokeWidth={2} />
+                  <Area type="monotone" dataKey="files" name="Files" stroke="#ec4899" fill="url(#colorFiles)" strokeWidth={1.5} />
+                  <Area type="monotone" dataKey="tasks" name="Tasks" stroke="#10b981" fill="url(#colorTasks)" strokeWidth={1.5} />
+                  <Area type="monotone" dataKey="messages" name="Messages" stroke="#06b6d4" fill="url(#colorMessages)" strokeWidth={1.5} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <div className="text-gray-400 text-sm">No data yet or chart loading...</div>
+          )}
+        </motion.div>
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
