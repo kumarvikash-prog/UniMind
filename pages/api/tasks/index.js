@@ -81,6 +81,13 @@ export default async function handler(req, res) {
         return res.status(404).json({ error: "Assignee not found" });
       }
 
+      // Normalize tags: accept comma-separated string or array
+      const normalizedTags = Array.isArray(tags)
+        ? tags
+        : (typeof tags === 'string' && tags
+          ? tags.split(',').map(tag => tag.trim())
+          : []);
+
       const task = new Task({
         title,
         description,
@@ -88,7 +95,7 @@ export default async function handler(req, res) {
         createdBy: currentUser._id,
         dueDate: dueDate ? new Date(dueDate) : null,
         priority,
-        tags: tags ? tags.split(',').map(tag => tag.trim()) : []
+        tags: normalizedTags
       });
 
       await task.save();
