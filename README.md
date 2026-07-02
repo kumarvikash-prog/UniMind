@@ -1,7 +1,5 @@
 # 🧠 UniMind – Smart Knowledge Collaboration Platform
 
-> Hackathon Project – Dawn of Code
-
 UniMind is a comprehensive collaboration platform meticulously designed for students, researchers, and distributed teams to **share knowledge, manage tasks, and stay seamlessly connected** within a unified workspace.  
 Built leveraging the power of **Next.js, TailwindCSS, MongoDB, and Socket.IO**, UniMind provides an immersive **real-time collaborative experience** layered with a highly intuitive UI.
 
