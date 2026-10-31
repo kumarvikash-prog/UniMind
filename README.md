@@ -5,13 +5,6 @@ Built leveraging the power of **Next.js, TailwindCSS, MongoDB, and Socket.IO**, 
 
 ---
 
-## 🖼 Project Preview
-
-<!-- Paste or replace the image below -->
-![Add your project screenshot here](docs/preview.png)
-
----
-
 ## 🚀 Application Flow & Architecture
 
 The following flowchart illustrates the high-level data flow and user interaction inside the UniMind ecosystem:
